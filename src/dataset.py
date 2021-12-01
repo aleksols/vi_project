@@ -34,7 +34,7 @@ def get_transform(train):
     return T.Compose(transforms)
 
 
-class VideoDataset(torch.utils.data.Dataset):
+class CocoDataset(torch.utils.data.Dataset):
     def __init__(self, root=project_paths.video_images, video_ids=[0, 1, 2], channels=[0, 1, 2], transforms=None):
         self.transform = transforms
         self.root = root
@@ -115,16 +115,18 @@ class VideoDataset(torch.utils.data.Dataset):
         target["iscrowd"] = torch.as_tensor(is_crowds, dtype=torch.int64)
         return img, target
 
+    
+
 
 def get_dataloader(vids=[0, 1, 2], channels=[0, 1, 2], batch_size=4, num_workers=0, train=False):
-    dataset = VideoDataset(
+    dataset = CocoDataset(
         video_ids=vids,
         channels=channels,
         transforms=get_transform(train)
     )
 
     data_loader = torch.utils.data.DataLoader(
-        dataset, batch_size=4, shuffle=False, num_workers=0,
+        dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers,
         collate_fn=lambda batch: list(zip(*batch))
     )
     return data_loader

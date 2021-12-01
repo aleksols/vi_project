@@ -3,6 +3,7 @@ LiDAR-videos/
 test/
 Videos
 Video-images
+predictions/
 
 
 # Byte-compiled / optimized / DLL files
