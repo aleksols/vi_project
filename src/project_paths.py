@@ -1,7 +1,9 @@
 from os import path
 
-videos = path.normpath(r"C:\Users\aleks\home\dev\vi_project\Videos")
-video_images = path.normpath(r"C:\Users\aleks\home\dev\vi_project\Video-images")
+project_root = "/work/aleko/dev/vi_project"
+videos = path.join(project_root, "Videos")
+video_images = path.join(project_root, "Video-images")
+predictions_root = path.join(project_root, "predictions")
 
 def annotation_path(video_id):
     return path.join(video_images, f"Video_{video_id}", "annotations.json")

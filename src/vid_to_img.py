@@ -1,12 +1,9 @@
 import cv2
 from os import path, listdir, mkdir
 from tqdm import tqdm
+from project_paths import video_images, videos
+import numpy as np
 
-videos = "C:\\Users\\aleks\\home\\dev\\vi_project\\Videos"
-
-video_images = "C:\\Users\\aleks\\home\\dev\\vi_project\\Video-images"
-
-lidar_imates = "C:\\Users\\aleks\\home\\dev\\vi_project\\Videos"
 
 def safe_mkdir(dir_path):
     try:
@@ -16,8 +13,7 @@ def safe_mkdir(dir_path):
 
 def get_coco_datasets():
     data = {}
-
-    for i, video_dir in enumerate(listdir(videos)):
+    for i, video_dir in enumerate(sorted(listdir(videos))):
         videoxxx = path.join(videos, video_dir)
         ambient = next((f for f in listdir(videoxxx) if "ambient" in f), None)
         intensity = next((f for f in listdir(videoxxx) if "intensity" in f), None)
@@ -27,10 +23,10 @@ def get_coco_datasets():
                 "ambient": path.join(videoxxx, ambient),
                 "intensity": path.join(videoxxx, intensity),
                 "range": path.join(videoxxx, range_vid),
-                "annotations": None
+                "annotations": path.join(videoxxx, "annotations.json")
                 }
-        if "ano" in videoxxx.lower():
-            data[i]["annotations"] = path.join(videoxxx, "instances_default.json")
+        # if "ano" in videoxxx.lower():
+        #     data[i]["annotations"] = path.join(videoxxx, "annotations.json")
     return data
 
 def write_vid_to_img(video_path, full_out_path):
@@ -44,13 +40,48 @@ def write_vid_to_img(video_path, full_out_path):
         frame_name[4] = (count - 100 * frame_name[3]) // 10
         frame_name[5] = count % 10
         frame_name = "".join((str(x) for x in frame_name))
-        print(type(image))
-        print(dir(image))
-        break
+        # print(type(image))
+        # print(dir(image))
+        # break
         cv2.imwrite(path.join(full_out_path, f"frame_{frame_name}.PNG"), image)     # save frame as PNG file
         success, image = vidcap.read()
         count += 1
 
+def write_rgb_vid_to_img(video_parent, out_parent):
+    ambient = next((f for f in listdir(video_parent) if "ambient" in f), None)
+    intensity = next((f for f in listdir(video_parent) if "intensity" in f), None)
+    range_vid = next((f for f in listdir(video_parent) if "range" in f), None)
+    ambient = path.join(video_parent, ambient)
+    intensity = path.join(video_parent, intensity)
+    range_vid = path.join(video_parent, range_vid)
+    vidcap_a = cv2.VideoCapture(ambient)
+    vidcap_i = cv2.VideoCapture(intensity)
+    vidcap_r = cv2.VideoCapture(range_vid)
+    vidcaps = [vidcap_a, vidcap_i, vidcap_r]
+    def read_vidcaps():
+        successes = [] 
+        imgs = []
+        for vidcap in vidcaps:
+            suc, img = vidcap.read()
+            if not suc:
+                return False, None
+            successes.append(suc)
+            imgs.append(img)
+        return all(successes), np.stack([frame.sum(axis=2) / 3 for frame in imgs], axis=2)
+    success, image = read_vidcaps()
+    count = 0
+    while success:
+        frame_name = ["0"] * 6
+        frame_name[3] = count // 100
+        frame_name[4] = (count - 100 * frame_name[3]) // 10
+        frame_name[5] = count % 10
+        frame_name = "".join((str(x) for x in frame_name))
+        # print(type(image))
+        # print(dir(image))
+        # break
+        cv2.imwrite(path.join(out_parent, f"frame_{frame_name}.PNG"), image)     # save frame as PNG file
+        success, image = read_vidcaps()
+        count += 1
 
 def main():
     for key, path_dict in tqdm(get_coco_datasets().items()):
@@ -73,10 +104,10 @@ def main():
 
 
 if __name__ == "__main__":
-    # safe_mkdir(video_images)
-    # main()
+    safe_mkdir(video_images)
+    write_rgb_vid_to_img("/work/aleko/dev/vi_project/Videos/Video00000_Ano", "/work/aleko/dev/vi_project/yolo_images/images/test")
 
-    write_vid_to_img(videos)
+    # write_vid_to_img(videos)
     # # from pprint import pprint
     # pprint(get_coco_datasets())
     # import os
